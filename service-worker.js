@@ -1,4 +1,4 @@
-const CACHE_NAME = 'profile-cache-v3'; // Обновили до v3 для сброса кэша
+const CACHE_NAME = 'profile-cache-v4'; // Обновили до v4 для сброса кэша
 const urlsToCache = [
     '/',
     '/index.html',  // Страница авторизации
@@ -15,27 +15,38 @@ self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
             .then(cache => {
-                console.log('Service Worker: Caching files');
-                return cache.addAll(urlsToCache);
+                console.log('Service Worker: Caching files', urlsToCache);
+                return cache.addAll(urlsToCache)
+                    .catch(error => {
+                        console.error('Service Worker: Failed to cache', error);
+                        throw error;
+                    });
             })
-            .catch(error => console.error('Service Worker: Cache failed', error))
     );
-    // Заставляем SW активироваться сразу
-    self.skipWaiting();
+    self.skipWaiting(); // Активируем SW сразу
 });
 
 self.addEventListener('fetch', event => {
+    const requestUrl = new URL(event.request.url);
+    // Игнорируем запросы к API, они обрабатываются IndexedDB
+    if (requestUrl.pathname.startsWith('/api/')) {
+        return;
+    }
     event.respondWith(
         caches.match(event.request)
             .then(response => {
                 if (response) {
-                    return response; // Возвращаем из кэша
+                    console.log('Service Worker: Serving from cache', event.request.url);
+                    return response;
                 }
-                // Пробуем загрузить из сети, если нет — fallback на profile.html
+                console.log('Service Worker: Fetching from network', event.request.url);
                 return fetch(event.request).catch(() => {
-                    if (event.request.url.includes('profile.html')) {
+                    // Fallback для profile.html
+                    if (requestUrl.pathname === '/profile.html') {
+                        console.log('Service Worker: Fallback to profile.html');
                         return caches.match('/profile.html');
                     }
+                    console.log('Service Worker: Network unavailable and no cache for', event.request.url);
                 });
             })
     );
@@ -46,10 +57,12 @@ self.addEventListener('activate', event => {
         caches.keys().then(cacheNames => {
             return Promise.all(
                 cacheNames.filter(name => name !== CACHE_NAME)
-                    .map(name => caches.delete(name))
+                    .map(name => {
+                        console.log('Service Worker: Deleting old cache', name);
+                        return caches.delete(name);
+                    })
             );
         })
     );
-    // Забираем контроль над страницами
-    self.clients.claim();
+    self.clients.claim(); // Контролируем страницы сразу
 });
