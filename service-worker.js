@@ -1,8 +1,8 @@
-const CACHE_NAME = 'profile-cache-v2'; // Измени на v2, чтобы сбросить старый кэш
+const CACHE_NAME = 'profile-cache-v3'; // Обновили до v3 для сброса кэша
 const urlsToCache = [
     '/',
-    '/index.html',  // Главная страница (бывший auth.html)
-    '/profile.html',  // Страница профиля (бывший index.html)
+    '/index.html',  // Страница авторизации
+    '/profile.html',  // Страница профиля
     '/style.css',
     '/app.js',
     '/auth.js',
@@ -14,20 +14,30 @@ const urlsToCache = [
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
+            .then(cache => {
+                console.log('Service Worker: Caching files');
+                return cache.addAll(urlsToCache);
+            })
             .catch(error => console.error('Service Worker: Cache failed', error))
     );
+    // Заставляем SW активироваться сразу
+    self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
     event.respondWith(
         caches.match(event.request)
-            .then(response => response || fetch(event.request).catch(() => {
-                // Если запрос не в кэше и нет интернета, вернуть заглушку (опционально)
-                if (event.request.url.includes('profile.html')) {
-                    return caches.match('/profile.html');
+            .then(response => {
+                if (response) {
+                    return response; // Возвращаем из кэша
                 }
-            }))
+                // Пробуем загрузить из сети, если нет — fallback на profile.html
+                return fetch(event.request).catch(() => {
+                    if (event.request.url.includes('profile.html')) {
+                        return caches.match('/profile.html');
+                    }
+                });
+            })
     );
 });
 
@@ -40,4 +50,6 @@ self.addEventListener('activate', event => {
             );
         })
     );
+    // Забираем контроль над страницами
+    self.clients.claim();
 });
