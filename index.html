@@ -3,26 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Link</title>
+    <title>Profile Management</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-    <script src="app.js" defer></script>
+    <script src="auth.js" defer></script>
 </head>
 <body>
-    <div id="profile">
-        <h1 id="name"></h1>
-        <h2 id="surname"></h2>
-        <p><strong>Группа крови:</strong> <span id="blood_type"></span></p>
-        <p><strong>Аллергии:</strong> <span id="allergies"></span></p>
-        <p><strong>Противопоказания:</strong> <span id="contraindications"></span></p>
-        <div><strong>Контакты:</strong>
-            <ul id="contacts"></ul>
+    <div id="auth">
+        <h1>Вход / Регистрация</h1>
+        <div id="auth-form">
+            <input type="text" id="username" placeholder="Имя пользователя">
+            <input type="password" id="password" placeholder="Пароль">
+            <button onclick="register()">Зарегистрироваться</button>
+            <button onclick="login()">Войти</button>
+        </div>
+        <div id="profile-form" style="display: none;">
+            <h2>Ваш профиль</h2>
+            <input type="text" id="profile-name" placeholder="Имя" required>
+            <input type="text" id="profile-surname" placeholder="Фамилия" required>
+            <input type="text" id="profile-blood_type" placeholder="Группа крови (напр., A+)" required>
+            <input type="text" id="profile-allergies" placeholder="Аллергии (напр., Пенициллин)" required>
+            <input type="text" id="profile-contraindications" placeholder="Противопоказания" required>
+            <div id="contacts-container">
+                <h3>Контакты</h3>
+                <div class="contact-field">
+                    <input type="text" class="contact-type" placeholder="Тип контакта (напр., Телефон)">
+                    <input type="text" class="contact-value" placeholder="Значение (напр., +123456789)">
+                </div>
+                <button onclick="addContactField()">Добавить контакт</button>
+            </div>
+            <button onclick="saveProfile()">Сохранить профиль</button>
+            <button onclick="shareLink()">Поделиться ссылкой</button>
         </div>
     </div>
-    <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js');
-        }
-    </script>
 </body>
 </html>

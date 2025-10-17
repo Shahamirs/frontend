@@ -1,8 +1,7 @@
 const CACHE_NAME = 'profile-cache-v1';
+const CACHE_NAME = 'profile-cache-v1';
 const urlsToCache = [
-    '/',
-    '/index.html',
-    '/auth.html',
+    '/profile.html',  // Обновлено
     '/style.css',
     '/app.js',
     '/auth.js',
