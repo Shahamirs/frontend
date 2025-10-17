@@ -1,3 +1,5 @@
+import { openDB, saveProfile } from './app.js';
+
 let token = null;
 let userId = null;
 let profileId = null;
@@ -10,7 +12,7 @@ async function register() {
         return;
     }
     try {
-        const response = await fetch('https://unitlink-backend.onrender.com/register', { // Обновлено
+        const response = await fetch('https://unitlink-backend.onrender.com/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
@@ -29,7 +31,7 @@ async function register() {
 
 async function login(username, password) {
     try {
-        const response = await fetch('https://unitlink-backend.onrender.com/token', { // Обновлено
+        const response = await fetch('https://unitlink-backend.onrender.com/token', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: `username=${encodeURIComponent(username || document.getElementById('username').value)}&password=${encodeURIComponent(password || document.getElementById('password').value)}`
@@ -52,7 +54,7 @@ async function login(username, password) {
 
 async function loadMyProfile() {
     try {
-        const response = await fetch('https://unitlink-backend.onrender.com/api/my-profile', { // Обновлено
+        const response = await fetch('https://unitlink-backend.onrender.com/api/my-profile', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (response.ok) {
@@ -103,7 +105,7 @@ async function saveProfile() {
         return;
     }
     try {
-        const response = await fetch(`https://unitlink-backend.onrender.com/api/profile/${profileId}`, { // Обновлено
+        const response = await fetch(`https://unitlink-backend.onrender.com/api/profile/${profileId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -113,6 +115,10 @@ async function saveProfile() {
         });
         if (response.ok) {
             alert('Профиль сохранён');
+            // Автокэширование в IndexedDB
+            const db = await openDB();
+            await saveProfile(db, profile);
+            console.log('Profile cached in IndexedDB');
         } else {
             alert('Ошибка сохранения');
         }
