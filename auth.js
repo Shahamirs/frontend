@@ -1,8 +1,35 @@
-import { openDB, saveProfile } from './app.js';
+const DB_NAME = 'ProfileDB';
+const DB_VERSION = 1;
+const STORE_NAME = 'profiles';
 
 let token = null;
 let userId = null;
 let profileId = null;
+
+function openDB() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            }
+        };
+        request.onsuccess = e => resolve(e.target.result);
+        request.onerror = e => reject(e.target.error);
+    });
+}
+
+async function saveProfile(db, data, profileId) {
+    try {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({ ...data, id: profileId });
+        return tx.complete;
+    } catch (error) {
+        console.error('Error saving profile to IndexedDB:', error);
+    }
+}
 
 async function register() {
     const username = document.getElementById('username').value;
@@ -26,6 +53,7 @@ async function register() {
         }
     } catch (error) {
         alert('Ошибка регистрации: ' + error.message);
+        console.error('Register error:', error);
     }
 }
 
@@ -49,6 +77,7 @@ async function login(username, password) {
         }
     } catch (error) {
         alert('Ошибка входа: ' + error.message);
+        console.error('Login error:', error);
     }
 }
 
@@ -117,13 +146,14 @@ async function saveProfile() {
             alert('Профиль сохранён');
             // Автокэширование в IndexedDB
             const db = await openDB();
-            await saveProfile(db, profile);
+            await saveProfile(db, profile, profileId);
             console.log('Profile cached in IndexedDB');
         } else {
             alert('Ошибка сохранения');
         }
     } catch (error) {
         alert('Ошибка сохранения: ' + error.message);
+        console.error('Save profile error:', error);
     }
 }
 
