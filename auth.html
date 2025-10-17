@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Management</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="auth.js" defer></script>
+</head>
+<body>
+    <div id="auth">
+        <h1>Вход / Регистрация</h1>
+        <div id="auth-form">
+            <input type="text" id="username" placeholder="Имя пользователя">
+            <input type="password" id="password" placeholder="Пароль">
+            <button onclick="register()">Зарегистрироваться</button>
+            <button onclick="login()">Войти</button>
+        </div>
+        <div id="profile-form" style="display: none;">
+            <h2>Ваш профиль</h2>
+            <input type="text" id="profile-name" placeholder="Имя" required>
+            <input type="text" id="profile-surname" placeholder="Фамилия" required>
+            <input type="text" id="profile-blood_type" placeholder="Группа крови (напр., A+)" required>
+            <input type="text" id="profile-allergies" placeholder="Аллергии (напр., Пенициллин)" required>
+            <input type="text" id="profile-contraindications" placeholder="Противопоказания" required>
+            <div id="contacts-container">
+                <h3>Контакты</h3>
+                <div class="contact-field">
+                    <input type="text" class="contact-type" placeholder="Тип контакта (напр., Телефон)">
+                    <input type="text" class="contact-value" placeholder="Значение (напр., +123456789)">
+                </div>
+                <button onclick="addContactField()">Добавить контакт</button>
+            </div>
+            <button onclick="saveProfile()">Сохранить профиль</button>
+            <button onclick="shareLink()">Поделиться ссылкой</button>
+        </div>
+    </div>
+</body>
+</html>
