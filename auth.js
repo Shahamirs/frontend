@@ -122,7 +122,7 @@ async function saveProfile() {
 }
 
 function shareLink() {
-    const link = `https://your-frontend.vercel.app/?id=${profileId}`; // Замени на твой Vercel URL
+    const link = `https://frontend-five-silk-24.vercel.app/?id=${profileId}`;
     navigator.clipboard.writeText(link).then(() => {
         alert('Ссылка скопирована: ' + link);
     });
