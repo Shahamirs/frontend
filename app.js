@@ -5,18 +5,23 @@ const PROFILE_ID = new URLSearchParams(window.location.search).get('id') || '123
 const API_URL = `https://unitlink-backend.onrender.com/api/profile/${PROFILE_ID}`;
 
 export function renderProfile(data) {
-    document.getElementById('name').textContent = data.name || 'N/A';
-    document.getElementById('surname').textContent = data.surname || 'N/A';
-    document.getElementById('blood_type').textContent = data.blood_type || 'N/A';
-    document.getElementById('allergies').textContent = data.allergies || 'N/A';
-    document.getElementById('contraindications').textContent = data.contraindications || 'N/A';
-    const contactsList = document.getElementById('contacts');
-    contactsList.innerHTML = '';
-    (data.contacts || []).forEach(contact => {
-        const li = document.createElement('li');
-        li.textContent = `${contact.type}: ${contact.value}`;
-        contactsList.appendChild(li);
-    });
+    try {
+        document.getElementById('name').textContent = data.name || 'N/A';
+        document.getElementById('surname').textContent = data.surname || 'N/A';
+        document.getElementById('blood_type').textContent = data.blood_type || 'N/A';
+        document.getElementById('allergies').textContent = data.allergies || 'N/A';
+        document.getElementById('contraindications').textContent = data.contraindications || 'N/A';
+        const contactsList = document.getElementById('contacts');
+        contactsList.innerHTML = '';
+        (data.contacts || []).forEach(contact => {
+            const li = document.createElement('li');
+            li.textContent = `${contact.type}: ${contact.value}`;
+            contactsList.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Error rendering profile:', error);
+        document.body.innerHTML = '<p>Ошибка отображения профиля. Попробуйте позже.</p>';
+    }
 }
 
 export function openDB() {
@@ -72,7 +77,7 @@ async function loadProfile() {
             const response = await fetch(API_URL, {
                 headers: {
                     'Accept': 'application/json',
-                    'Cache-Control': 'no-cache' // Избегаем кэширования ответа
+                    'Cache-Control': 'no-cache'
                 }
             });
             if (response.ok) {
