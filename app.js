@@ -24,7 +24,9 @@ export function openDB() {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = e => {
             const db = e.target.result;
-            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+                db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            }
         };
         request.onsuccess = e => resolve(e.target.result);
         request.onerror = e => reject(e.target.error);
@@ -33,31 +35,50 @@ export function openDB() {
 
 export async function getCachedProfile(db) {
     return new Promise((resolve, reject) => {
-        const tx = db.transaction(STORE_NAME, 'readonly');
-        const store = tx.objectStore(STORE_NAME);
-        const request = store.get(PROFILE_ID);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
+        try {
+            const tx = db.transaction(STORE_NAME, 'readonly');
+            const store = tx.objectStore(STORE_NAME);
+            const request = store.get(PROFILE_ID);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        } catch (error) {
+            reject(error);
+        }
     });
 }
 
 export async function saveProfile(db, data) {
-    const tx = db.transaction(STORE_NAME, 'readwrite');
-    const store = tx.objectStore(STORE_NAME);
-    store.put({ ...data, id: PROFILE_ID });
-    return tx.complete;
+    try {
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({ ...data, id: PROFILE_ID });
+        return tx.complete;
+    } catch (error) {
+        console.error('Error saving profile to IndexedDB:', error);
+    }
 }
 
 async function loadProfile() {
-    const db = await openDB();
-    let data;
+    const db = await openDB().catch(error => {
+        console.error('Error opening IndexedDB:', error);
+        document.body.innerHTML = '<p>Ошибка базы данных. Попробуйте позже.</p>';
+        return null;
+    });
+    if (!db) return;
 
+    let data;
     if (navigator.onLine) {
         try {
-            const response = await fetch(API_URL);
+            const response = await fetch(API_URL, {
+                headers: {
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache' // Избегаем кэширования ответа
+                }
+            });
             if (response.ok) {
                 data = await response.json();
                 await saveProfile(db, data);
+                console.log('Profile fetched and cached');
             } else {
                 console.error('Failed to fetch profile:', response.status);
             }
