@@ -25,7 +25,8 @@ async function cacheProfile(db, data, profileId) {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
         store.put({ ...data, id: profileId });
-        return tx.complete;
+        await tx.complete;
+        console.log(`Profile cached in IndexedDB with id: ${profileId}`);
     } catch (error) {
         console.error('Error caching profile to IndexedDB:', error);
     }
@@ -90,7 +91,7 @@ function loadMyProfile() {
             if (!response.ok) throw new Error('Ошибка загрузки профиля');
             return response.json();
         })
-        .then(profile => {
+        .then(async profile => {
             document.getElementById('profile-name').value = profile.name || '';
             document.getElementById('profile-surname').value = profile.surname || '';
             document.getElementById('profile-blood_type').value = profile.blood_type || '';
@@ -102,6 +103,10 @@ function loadMyProfile() {
                 addContactField(contact.type, contact.value);
             });
             container.appendChild(document.createElement('button')).outerHTML = '<button onclick="addContactField()">Добавить контакт</button>';
+            // Кэшируем профиль при загрузке
+            const db = await openDB();
+            await cacheProfile(db, profile, profileId);
+            console.log('Profile pre-cached on loadMyProfile');
         })
         .catch(error => {
             console.log('No profile yet or error:', error);

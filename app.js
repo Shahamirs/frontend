@@ -6,11 +6,11 @@ const API_URL = `https://unitlink-backend.onrender.com/api/profile/${PROFILE_ID}
 
 function renderProfile(data) {
     try {
-        document.getElementById('name').textContent = data.name || 'N/A';
-        document.getElementById('surname').textContent = data.surname || 'N/A';
-        document.getElementById('blood_type').textContent = data.blood_type || 'N/A';
-        document.getElementById('allergies').textContent = data.allergies || 'N/A';
-        document.getElementById('contraindications').textContent = data.contraindications || 'N/A';
+        document.getElementById('name').textContent = data.name || 'Неизвестно';
+        document.getElementById('surname').textContent = data.surname || 'Неизвестно';
+        document.getElementById('blood_type').textContent = data.blood_type || 'Не указана';
+        document.getElementById('allergies').textContent = data.allergies || 'Не указаны';
+        document.getElementById('contraindications').textContent = data.contraindications || 'Не указаны';
         const contactsList = document.getElementById('contacts');
         contactsList.innerHTML = '';
         (data.contacts || []).forEach(contact => {
@@ -57,7 +57,8 @@ async function saveProfile(db, data) {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
         store.put({ ...data, id: PROFILE_ID });
-        return tx.complete;
+        await tx.complete;
+        console.log(`Profile saved in IndexedDB with id: ${PROFILE_ID}`);
     } catch (error) {
         console.error('Error saving profile to IndexedDB:', error);
     }
@@ -98,11 +99,27 @@ async function loadProfile() {
             if (data) {
                 renderProfile(data);
             } else {
-                document.body.innerHTML = '<p>Нет данных для оффлайн-доступа. Подключитесь к интернету.</p>';
+                // Fallback для первого оффлайн-открытия
+                renderProfile({
+                    name: 'Неизвестно',
+                    surname: 'Неизвестно',
+                    blood_type: 'Не указана',
+                    allergies: 'Не указаны',
+                    contraindications: 'Не указаны',
+                    contacts: []
+                });
+                console.log('No cached data, showing fallback profile');
             }
         } catch (error) {
             console.error('Error loading cached profile:', error);
-            document.body.innerHTML = '<p>Ошибка загрузки данных. Попробуйте позже.</p>';
+            renderProfile({
+                name: 'Ошибка',
+                surname: 'Ошибка',
+                blood_type: 'Ошибка',
+                allergies: 'Ошибка',
+                contraindications: 'Ошибка',
+                contacts: []
+            });
         }
     } else {
         renderProfile(data);
