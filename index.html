@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile Management</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <script src="auth.js" defer></script>
 </head>
 <body>
@@ -37,18 +37,18 @@
         </div>
     </div>
     <script>
-        // Привязка обработчиков событий
+        // Привязка обработчиков
         document.getElementById('register-btn').addEventListener('click', () => {
-            if (typeof register === 'function') {
-                register();
+            if (typeof window.register === 'function') {
+                window.register();
             } else {
                 console.error('Register function is not defined');
                 alert('Ошибка: функция регистрации не найдена');
             }
         });
         document.getElementById('login-btn').addEventListener('click', () => {
-            if (typeof login === 'function') {
-                login();
+            if (typeof window.login === 'function') {
+                window.login();
             } else {
                 console.error('Login function is not defined');
                 alert('Ошибка: функция входа не найдена');

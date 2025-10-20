@@ -4,7 +4,7 @@ const STORE_NAME = 'profiles';
 const PROFILE_ID = new URLSearchParams(window.location.search).get('id') || '12345';
 const API_URL = `https://unitlink-backend.onrender.com/api/profile/${PROFILE_ID}`;
 
-export function renderProfile(data) {
+function renderProfile(data) {
     try {
         document.getElementById('name').textContent = data.name || 'N/A';
         document.getElementById('surname').textContent = data.surname || 'N/A';
@@ -24,7 +24,7 @@ export function renderProfile(data) {
     }
 }
 
-export function openDB() {
+function openDB() {
     return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = e => {
@@ -38,7 +38,7 @@ export function openDB() {
     });
 }
 
-export async function getCachedProfile(db) {
+async function getCachedProfile(db) {
     return new Promise((resolve, reject) => {
         try {
             const tx = db.transaction(STORE_NAME, 'readonly');
@@ -52,7 +52,7 @@ export async function getCachedProfile(db) {
     });
 }
 
-export async function saveProfile(db, data) {
+async function saveProfile(db, data) {
     try {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);

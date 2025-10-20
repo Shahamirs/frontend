@@ -20,14 +20,14 @@ function openDB() {
     });
 }
 
-async function saveProfile(db, data, profileId) {
+async function cacheProfile(db, data, profileId) {
     try {
         const tx = db.transaction(STORE_NAME, 'readwrite');
         const store = tx.objectStore(STORE_NAME);
         store.put({ ...data, id: profileId });
         return tx.complete;
     } catch (error) {
-        console.error('Error saving profile to IndexedDB:', error);
+        console.error('Error caching profile to IndexedDB:', error);
     }
 }
 
@@ -43,14 +43,12 @@ function register() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка регистрации');
+            return response.json();
+        })
         .then(result => {
-            if (response.ok) {
-                // Автоматический вход после регистрации
-                login(username, password);
-            } else {
-                alert(result.detail);
-            }
+            login(username, password); // Автовход
         })
         .catch(error => {
             alert('Ошибка регистрации: ' + error.message);
@@ -58,24 +56,25 @@ function register() {
         });
 }
 
-function login(username, password) {
+function login() {
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
     fetch('https://unitlink-backend.onrender.com/token', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: `username=${encodeURIComponent(username || document.getElementById('username').value)}&password=${encodeURIComponent(password || document.getElementById('password').value)}`
+        body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка входа');
+            return response.json();
+        })
         .then(result => {
-            if (response.ok) {
-                token = result.access_token;
-                userId = result.user_id;
-                profileId = userId; // profile_id = user_id
-                document.getElementById('auth-form').style.display = 'none';
-                document.getElementById('profile-form').style.display = 'block';
-                loadMyProfile();
-            } else {
-                alert(result.detail);
-            }
+            token = result.access_token;
+            userId = result.user_id;
+            profileId = userId;
+            document.getElementById('auth-form').style.display = 'none';
+            document.getElementById('profile-form').style.display = 'block';
+            loadMyProfile();
         })
         .catch(error => {
             alert('Ошибка входа: ' + error.message);
@@ -87,21 +86,22 @@ function loadMyProfile() {
     fetch('https://unitlink-backend.onrender.com/api/my-profile', {
         headers: { 'Authorization': `Bearer ${token}` }
     })
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка загрузки профиля');
+            return response.json();
+        })
         .then(profile => {
-            if (response.ok) {
-                document.getElementById('profile-name').value = profile.name || '';
-                document.getElementById('profile-surname').value = profile.surname || '';
-                document.getElementById('profile-blood_type').value = profile.blood_type || '';
-                document.getElementById('profile-allergies').value = profile.allergies || '';
-                document.getElementById('profile-contraindications').value = profile.contraindications || '';
-                const container = document.getElementById('contacts-container');
-                container.innerHTML = '<h3>Контакты</h3>';
-                profile.contacts.forEach(contact => {
-                    addContactField(contact.type, contact.value);
-                });
-                container.appendChild(document.createElement('button')).outerHTML = '<button onclick="addContactField()">Добавить контакт</button>';
-            }
+            document.getElementById('profile-name').value = profile.name || '';
+            document.getElementById('profile-surname').value = profile.surname || '';
+            document.getElementById('profile-blood_type').value = profile.blood_type || '';
+            document.getElementById('profile-allergies').value = profile.allergies || '';
+            document.getElementById('profile-contraindications').value = profile.contraindications || '';
+            const container = document.getElementById('contacts-container');
+            container.innerHTML = '<h3>Контакты</h3>';
+            profile.contacts.forEach(contact => {
+                addContactField(contact.type, contact.value);
+            });
+            container.appendChild(document.createElement('button')).outerHTML = '<button onclick="addContactField()">Добавить контакт</button>';
         })
         .catch(error => {
             console.log('No profile yet or error:', error);
@@ -144,17 +144,15 @@ function saveProfile() {
         },
         body: JSON.stringify(profile)
     })
-        .then(response => response.json())
-        .then(async result => {
-            if (response.ok) {
-                alert('Профиль сохранён');
-                // Автокэширование
-                const db = await openDB();
-                await saveProfile(db, profile, profileId);
-                console.log('Profile cached in IndexedDB');
-            } else {
-                alert('Ошибка сохранения');
-            }
+        .then(response => {
+            if (!response.ok) throw new Error('Ошибка сохранения');
+            return response.json();
+        })
+        .then(async () => {
+            alert('Профиль сохранён');
+            const db = await openDB();
+            await cacheProfile(db, profile, profileId);
+            console.log('Profile cached in IndexedDB');
         })
         .catch(error => {
             alert('Ошибка сохранения: ' + error.message);

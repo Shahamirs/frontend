@@ -1,8 +1,8 @@
-const CACHE_NAME = 'profile-cache-v4'; // Обновили до v4 для сброса кэша
+const CACHE_NAME = 'profile-cache-v6';
 const urlsToCache = [
     '/',
-    '/index.html',  // Страница авторизации
-    '/profile.html',  // Страница профиля
+    '/index.html',
+    '/profile.html',
     '/style.css',
     '/app.js',
     '/auth.js',
@@ -16,19 +16,15 @@ self.addEventListener('install', event => {
         caches.open(CACHE_NAME)
             .then(cache => {
                 console.log('Service Worker: Caching files', urlsToCache);
-                return cache.addAll(urlsToCache)
-                    .catch(error => {
-                        console.error('Service Worker: Failed to cache', error);
-                        throw error;
-                    });
+                return cache.addAll(urlsToCache);
             })
+            .catch(error => console.error('Service Worker: Failed to cache', error))
     );
-    self.skipWaiting(); // Активируем SW сразу
+    self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
     const requestUrl = new URL(event.request.url);
-    // Игнорируем запросы к API, они обрабатываются IndexedDB
     if (requestUrl.pathname.startsWith('/api/')) {
         return;
     }
@@ -39,14 +35,11 @@ self.addEventListener('fetch', event => {
                     console.log('Service Worker: Serving from cache', event.request.url);
                     return response;
                 }
-                console.log('Service Worker: Fetching from network', event.request.url);
                 return fetch(event.request).catch(() => {
-                    // Fallback для profile.html
-                    if (requestUrl.pathname === '/profile.html') {
+                    if (requestUrl.pathname.includes('profile.html')) {
                         console.log('Service Worker: Fallback to profile.html');
                         return caches.match('/profile.html');
                     }
-                    console.log('Service Worker: Network unavailable and no cache for', event.request.url);
                 });
             })
     );
@@ -64,5 +57,5 @@ self.addEventListener('activate', event => {
             );
         })
     );
-    self.clients.claim(); // Контролируем страницы сразу
+    self.clients.claim();
 });
