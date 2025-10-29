@@ -1,66 +1,54 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Management</title>
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="/manifest.json">
-    <script src="auth.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>UnitLink</title>
+  <link rel="stylesheet" href="style.css"/>
+  <link rel="manifest" href="/manifest.json"/>
+  <script src="auth.js" defer></script>
 </head>
 <body>
-    <div id="auth">
-        <h1>Вход / Регистрация</h1>
-        <div id="auth-form">
-            <input type="text" id="username" placeholder="Имя пользователя">
-            <input type="password" id="password" placeholder="Пароль">
-            <button id="register-btn">Зарегистрироваться</button>
-            <button id="login-btn">Войти</button>
-        </div>
-        <div id="profile-form" style="display: none;">
-            <h2>Ваш профиль</h2>
-            <input type="text" id="profile-name" placeholder="Имя" required>
-            <input type="text" id="profile-surname" placeholder="Фамилия" required>
-            <input type="text" id="profile-blood_type" placeholder="Группа крови (напр., A+)" required>
-            <input type="text" id="profile-allergies" placeholder="Аллергии (напр., Пенициллин)" required>
-            <input type="text" id="profile-contraindications" placeholder="Противопоказания" required>
-            <div id="contacts-container">
-                <h3>Контакты</h3>
-                <div class="contact-field">
-                    <input type="text" class="contact-type" placeholder="Тип контакта (напр., Телефон)">
-                    <input type="text" class="contact-value" placeholder="Значение (напр., +123456789)">
-                </div>
-                <button onclick="addContactField()">Добавить контакт</button>
-            </div>
-            <button onclick="saveProfile()">Сохранить профиль</button>
-            <button onclick="shareLink()">Поделиться ссылкой</button>
-        </div>
+  <div id="auth">
+    <h1>Вход / Регистрация</h1>
+    <div id="auth-form">
+      <input type="text" id="username" placeholder="Логин"/>
+      <input type="password" id="password" placeholder="Пароль"/>
+      <button id="register-btn">Зарегистрироваться</button>
+      <button id="login-btn">Войти</button>
     </div>
-    <script>
-        // Привязка обработчиков
-        document.getElementById('register-btn').addEventListener('click', () => {
-            if (typeof window.register === 'function') {
-                window.register();
-            } else {
-                console.error('Register function is not defined');
-                alert('Ошибка: функция регистрации не найдена');
-            }
-        });
-        document.getElementById('login-btn').addEventListener('click', () => {
-            if (typeof window.login === 'function') {
-                window.login();
-            } else {
-                console.error('Login function is not defined');
-                alert('Ошибка: функция входа не найдена');
-            }
-        });
 
-        // Регистрация Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/service-worker.js')
-                .then(() => console.log('Service Worker Registered'))
-                .catch(error => console.error('Service Worker Registration Failed:', error));
-        }
-    </script>
+    <div id="profile-form" style="display:none;">
+      <h2>Ваш профиль</h2>
+      <input id="profile-name" placeholder="Имя" required/>
+      <input id="profile-surname" placeholder="Фамилия" required/>
+      <input id="profile-blood_type" placeholder="Группа крови" required/>
+      <input id="profile-allergies" placeholder="Аллергии"/>
+      <input id="profile-contraindications" placeholder="Противопоказания"/>
+      <div id="contacts-container">
+        <h3>Контакты</h3>
+        <div class="contact-field">
+          <input type="text" class="contact-type" placeholder="Тип"/>
+          <input type="text" class="contact-value" placeholder="Значение"/>
+        </div>
+        <button onclick="addContactField()">Добавить</button>
+      </div>
+      <button onclick="saveProfile()">Сохранить</button>
+      <button onclick="shareLink()">Поделиться</button>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('load', () => {
+      const regBtn = document.getElementById('register-btn');
+      const logBtn = document.getElementById('login-btn');
+      regBtn?.addEventListener('click', window.register);
+      logBtn?.addEventListener('click', window.login);
+    });
+
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js');
+    }
+  </script>
 </body>
 </html>

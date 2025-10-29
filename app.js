@@ -1,125 +1,80 @@
+// app.js
 const DB_NAME = 'ProfileDB';
-const DB_VERSION = 1;
 const STORE_NAME = 'profiles';
-const PROFILE_ID = new URLSearchParams(window.location.search).get('id') || '12345';
+const PROFILE_ID = new URLSearchParams(location.search).get('id') || 'unknown';
 const API_URL = `https://unitlink-backend.onrender.com/api/profile/${PROFILE_ID}`;
 
-function renderProfile(data) {
-    try {
-        document.getElementById('name').textContent = data.name || 'Неизвестно';
-        document.getElementById('surname').textContent = data.surname || 'Неизвестно';
-        document.getElementById('blood_type').textContent = data.blood_type || 'Не указана';
-        document.getElementById('allergies').textContent = data.allergies || 'Не указаны';
-        document.getElementById('contraindications').textContent = data.contraindications || 'Не указаны';
-        const contactsList = document.getElementById('contacts');
-        contactsList.innerHTML = '';
-        (data.contacts || []).forEach(contact => {
-            const li = document.createElement('li');
-            li.textContent = `${contact.type}: ${contact.value}`;
-            contactsList.appendChild(li);
-        });
-    } catch (error) {
-        console.error('Error rendering profile:', error);
-        document.body.innerHTML = '<p>Ошибка отображения профиля. Попробуйте позже.</p>';
-    }
-}
-
 function openDB() {
-    return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onupgradeneeded = e => {
-            const db = e.target.result;
-            if (!db.objectStoreNames.contains(STORE_NAME)) {
-                db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-            }
-        };
-        request.onsuccess = e => resolve(e.target.result);
-        request.onerror = e => reject(e.target.error);
-    });
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
 }
 
-async function getCachedProfile(db) {
-    return new Promise((resolve, reject) => {
-        try {
-            const tx = db.transaction(STORE_NAME, 'readonly');
-            const store = tx.objectStore(STORE_NAME);
-            const request = store.get(PROFILE_ID);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror = () => reject(request.error);
-        } catch (error) {
-            reject(error);
-        }
-    });
+async function getCached() {
+  const db = await openDB();
+  const tx = db.transaction(STORE_NAME, 'readonly');
+  const store = tx.objectStore(STORE_NAME);
+  return await store.get(PROFILE_ID);
 }
 
-async function saveProfile(db, data) {
+function render(data) {
+  document.getElementById('name').textContent = data.name ?? 'Неизвестно';
+  document.getElementById('surname').textContent = data.surname ?? 'Неизвестно';
+  document.getElementById('blood_type').textContent = data.blood_type ?? 'Не указана';
+  document.getElementById('allergies').textContent = data.allergies ?? 'Не указаны';
+  document.getElementById('contraindications').textContent = data.contraindications ?? 'Не указаны';
+
+  const ul = document.getElementById('contacts');
+  ul.innerHTML = '';
+  (data.contacts || []).forEach(c => {
+    const li = document.createElement('li');
+    li.textContent = `${c.type}: ${c.value}`;
+    ul.appendChild(li);
+  });
+}
+
+// Основной поток
+(async () => {
+  let data = null;
+
+  // 1. Онлайн
+  if (navigator.onLine) {
     try {
-        const tx = db.transaction(STORE_NAME, 'readwrite');
-        const store = tx.objectStore(STORE_NAME);
-        store.put({ ...data, id: PROFILE_ID });
-        await tx.complete;
-        console.log(`Profile saved in IndexedDB with id: ${PROFILE_ID}`);
-    } catch (error) {
-        console.error('Error saving profile to IndexedDB:', error);
-    }
-}
+      const r = await fetch(API_URL, { cache: 'no-cache' });
+      if (r.ok) {
+        data = await r.json();
+        const db = await openDB();
+        await db.transaction(STORE_NAME, 'readwrite')
+                .objectStore(STORE_NAME)
+                .put({ ...data, id: PROFILE_ID });
+      }
+    } catch (e) { /* игнорируем */ }
+  }
 
-async function loadProfile() {
-    const db = await openDB().catch(error => {
-        console.error('Error opening IndexedDB:', error);
-        return null;
-    });
-    if (!db) {
-        renderFallbackProfile();
-        return;
-    }
+  // 2. Кэш
+  if (!data) {
+    data = await getCached();
+  }
 
-    let data;
-    if (navigator.onLine) {
-        try {
-            const response = await fetch(API_URL);
-            if (response.ok) {
-                data = await response.json();
-                await saveProfile(db, data);
-            }
-        } catch (error) {
-            console.log('No internet, trying cache:', error);
-        }
-    }
+  // 3. Заглушка
+  if (!data) {
+    data = {
+      name: 'Неизвестно',
+      surname: 'Неизвестно',
+      blood_type: 'Не указана',
+      allergies: 'Не указаны',
+      contraindications: 'Не указаны',
+      contacts: []
+    };
+  }
 
-    if (!data) {
-        try {
-            data = await getCachedProfile(db);
-            if (data) {
-                renderProfile(data);
-            } else {
-                renderFallbackProfile();
-            }
-        } catch (error) {
-            console.error('Error loading cached profile:', error);
-            renderFallbackProfile();
-        }
-    } else {
-        renderProfile(data);
-    }
-}
-
-function renderFallbackProfile() {
-    console.log('Rendering fallback profile for offline first open');
-    document.body.innerHTML = '<p>Данные профиля недоступны оффлайн. Подключитесь к интернету для загрузки. Здесь может быть заглушка с базовой информацией.</p>';
-    // Или рендер заглушки с 'Неизвестно', как раньше
-    renderProfile({
-        name: 'Неизвестно',
-        surname: 'Неизвестно',
-        blood_type: 'Не указана',
-        allergies: 'Не указаны',
-        contraindications: 'Не указаны',
-        contacts: []
-    });
-}
-
-loadProfile();
-
-window.addEventListener('online', () => {
-    loadProfile();
-});
+  render(data);
+})();

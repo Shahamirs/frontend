@@ -1,61 +1,45 @@
-const CACHE_NAME = 'profile-cache-v9'; // Обновили для сброса кэша
-const urlsToCache = [
-    '/',
-    '/index.html',
-    '/profile.html',  // Кэшируем заранее
-    '/style.css',
-    '/app.js',
-    '/auth.js',
-    '/manifest.json',
-    '/icon-192.png',
-    '/icon-512.png'
+// service-worker.js
+const CACHE_NAME = 'unitlink-v10';
+const PRECACHE = [
+  '/',
+  '/index.html',
+  '/profile.html',
+  '/style.css',
+  '/app.js',
+  '/auth.js',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png'
 ];
 
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => {
-                console.log('Service Worker: Caching files', urlsToCache);
-                return cache.addAll(urlsToCache);
-            })
-            .catch(error => console.error('Service Worker: Failed to cache', error))
-    );
-    self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(PRECACHE))
+      .catch(err => console.error('SW: precache failed', err))
+  );
+  self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
-    const requestUrl = new URL(event.request.url);
-    if (requestUrl.pathname.startsWith('/api/')) {
-        return;
-    }
-    event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                if (response) {
-                    console.log('Service Worker: Serving from cache', event.request.url);
-                    return response;
-                }
-                return fetch(event.request).catch(() => {
-                    if (requestUrl.pathname.includes('profile.html')) {
-                        console.log('Service Worker: Fallback to profile.html');
-                        return caches.match('/profile.html');
-                    }
-                });
-            })
-    );
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/')) return;
+
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => response || fetch(event.request).catch(() => {
+        if (url.pathname.includes('profile.html')) {
+          return caches.match('/profile.html');
+        }
+      }))
+  );
 });
 
 self.addEventListener('activate', event => {
-    event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.filter(name => name !== CACHE_NAME)
-                    .map(name => {
-                        console.log('Service Worker: Deleting old cache', name);
-                        return caches.delete(name);
-                    })
-            );
-        })
-    );
-    self.clients.claim();
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
 });
