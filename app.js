@@ -67,26 +67,20 @@ async function saveProfile(db, data) {
 async function loadProfile() {
     const db = await openDB().catch(error => {
         console.error('Error opening IndexedDB:', error);
-        document.body.innerHTML = '<p>Ошибка базы данных. Попробуйте позже.</p>';
         return null;
     });
-    if (!db) return;
+    if (!db) {
+        renderFallbackProfile();
+        return;
+    }
 
     let data;
     if (navigator.onLine) {
         try {
-            const response = await fetch(API_URL, {
-                headers: {
-                    'Accept': 'application/json',
-                    'Cache-Control': 'no-cache'
-                }
-            });
+            const response = await fetch(API_URL);
             if (response.ok) {
                 data = await response.json();
                 await saveProfile(db, data);
-                console.log('Profile fetched and cached');
-            } else {
-                console.error('Failed to fetch profile:', response.status);
             }
         } catch (error) {
             console.log('No internet, trying cache:', error);
@@ -99,31 +93,29 @@ async function loadProfile() {
             if (data) {
                 renderProfile(data);
             } else {
-                // Fallback для первого оффлайн-открытия
-                renderProfile({
-                    name: 'Неизвестно',
-                    surname: 'Неизвестно',
-                    blood_type: 'Не указана',
-                    allergies: 'Не указаны',
-                    contraindications: 'Не указаны',
-                    contacts: []
-                });
-                console.log('No cached data, showing fallback profile');
+                renderFallbackProfile();
             }
         } catch (error) {
             console.error('Error loading cached profile:', error);
-            renderProfile({
-                name: 'Ошибка',
-                surname: 'Ошибка',
-                blood_type: 'Ошибка',
-                allergies: 'Ошибка',
-                contraindications: 'Ошибка',
-                contacts: []
-            });
+            renderFallbackProfile();
         }
     } else {
         renderProfile(data);
     }
+}
+
+function renderFallbackProfile() {
+    console.log('Rendering fallback profile for offline first open');
+    document.body.innerHTML = '<p>Данные профиля недоступны оффлайн. Подключитесь к интернету для загрузки. Здесь может быть заглушка с базовой информацией.</p>';
+    // Или рендер заглушки с 'Неизвестно', как раньше
+    renderProfile({
+        name: 'Неизвестно',
+        surname: 'Неизвестно',
+        blood_type: 'Не указана',
+        allergies: 'Не указаны',
+        contraindications: 'Не указаны',
+        contacts: []
+    });
 }
 
 loadProfile();

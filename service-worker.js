@@ -1,8 +1,8 @@
-const CACHE_NAME = 'profile-cache-v7';
+const CACHE_NAME = 'profile-cache-v9'; // Обновили для сброса кэша
 const urlsToCache = [
     '/',
     '/index.html',
-    '/profile.html',
+    '/profile.html',  // Кэшируем заранее
     '/style.css',
     '/app.js',
     '/auth.js',
