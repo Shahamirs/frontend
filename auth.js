@@ -1,4 +1,3 @@
-// auth.js (полный файл с исправлениями)
 const DB_NAME = 'ProfileDB';
 const DB_VERSION = 1;
 const STORE_NAME = 'profiles';
@@ -109,7 +108,13 @@ function loadMyProfile() {
             document.getElementById('profile-contraindications').value = profile.contraindications || '';
             const container = document.getElementById('contacts-container');
             container.innerHTML = '<h3>Контакты</h3>';
-            (profile.contacts || []).forEach(contact => addContactField(contact.type, contact.value));
+            // Проверяем, что contacts существует и является массивом
+            if (profile.contacts && Array.isArray(profile.contacts)) {
+                profile.contacts.forEach(contact => addContactField(contact.type, contact.value));
+            } else {
+                console.log('No contacts found, adding empty field');
+                addContactField();
+            }
             container.appendChild(document.createElement('button')).outerHTML = '<button onclick="addContactField()">Добавить контакт</button>';
             // Кэшируем профиль
             const db = await openDB();
