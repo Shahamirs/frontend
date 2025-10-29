@@ -1,29 +1,30 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Профиль</title>
-  <link rel="stylesheet" href="style.css"/>
-  <link rel="manifest" href="/manifest.json"/>
-  <script src="app.js" defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Link</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="/manifest.json">
+    <script src="app.js" defer></script>
 </head>
 <body>
-  <div id="profile">
-    <h1 id="name"></h1>
-    <h2 id="surname"></h2>
-    <p><strong>Группа крови:</strong> <span id="blood_type"></span></p>
-    <p><strong>Аллергии:</strong> <span id="allergies"></span></p>
-    <p><strong>Противопоказания:</strong> <span id="contraindications"></span></p>
-    <div><strong>Контакты:</strong>
-      <ul id="contacts"></ul>
+    <div id="profile">
+        <h1 id="name"></h1>
+        <h2 id="surname"></h2>
+        <p><strong>Группа крови:</strong> <span id="blood_type"></span></p>
+        <p><strong>Аллергии:</strong> <span id="allergies"></span></p>
+        <p><strong>Противопоказания:</strong> <span id="contraindications"></span></p>
+        <div><strong>Контакты:</strong>
+            <ul id="contacts"></ul>
+        </div>
     </div>
-  </div>
-
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js');
-    }
-  </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(() => console.log('SW registered'))
+                .catch(error => console.error('SW failed:', error));
+        }
+    </script>
 </body>
 </html>
